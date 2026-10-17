@@ -4,6 +4,8 @@ All notable changes to herdr-automatic-rename are documented here. The format fo
 
 ## [Unreleased]
 
+## [0.13.1] - 2026-10-17
+
 ### Fixed
 
 - Tabs mirrored by [herdr-mirror](https://github.com/nikok6/herdr-mirror) keep the label the remote machine gives them. The local plugin used to name, number and host-tag them, and herdr-mirror pushed that label to the remote, where it opted the tab out ([#26](https://github.com/qu8n/herdr-automatic-rename/issues/26), thanks @paidem).
@@ -247,7 +249,8 @@ First public release.
 - Configuration via `~/.config/herdr-automatic-rename/config.sh` (or `$HERDR_AUTOMATIC_RENAME_CONFIG`), with a documented `config.example.sh`.
 - A self-contained test suite (bash and jq only).
 
-[Unreleased]: https://github.com/qu8n/herdr-automatic-rename/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/qu8n/herdr-automatic-rename/compare/v0.13.1...HEAD
+[0.13.1]: https://github.com/qu8n/herdr-automatic-rename/compare/v0.13.0...v0.13.1
 [0.13.0]: https://github.com/qu8n/herdr-automatic-rename/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/qu8n/herdr-automatic-rename/compare/v0.11.1...v0.12.0
 [0.11.1]: https://github.com/qu8n/herdr-automatic-rename/compare/v0.11.0...v0.11.1
