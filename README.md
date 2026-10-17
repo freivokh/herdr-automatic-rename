@@ -52,7 +52,8 @@ This hook makes the renaming mechanism happen immediately when a command starts.
 
 ```zsh
 # ~/.zshrc
-for _f in ${HOME}/.config/herdr/plugins/github/herdr-automatic-rename-*/shell/hook.zsh(N); do
+for _f in ${HOME}/.config/herdr/plugins/github-installations/herdr-automatic-rename-*/*/checkout/shell/hook.zsh(N) \
+          ${HOME}/.config/herdr/plugins/github/herdr-automatic-rename-*/shell/hook.zsh(N); do
   source $_f; break
 done
 ```
@@ -61,7 +62,8 @@ done
 
 ```bash
 # ~/.bashrc
-for _f in "$HOME"/.config/herdr/plugins/github/herdr-automatic-rename-*/shell/hook.bash; do
+for _f in "$HOME"/.config/herdr/plugins/github-installations/herdr-automatic-rename-*/*/checkout/shell/hook.bash \
+          "$HOME"/.config/herdr/plugins/github/herdr-automatic-rename-*/shell/hook.bash; do
   [ -r "$_f" ] && { source "$_f"; break; }
 done
 ```
@@ -70,7 +72,8 @@ done
 
 ```fish
 # ~/.config/fish/config.fish
-for _f in $HOME/.config/herdr/plugins/github/herdr-automatic-rename-*/shell/hook.fish
+for _f in $HOME/.config/herdr/plugins/github-installations/herdr-automatic-rename-*/*/checkout/shell/hook.fish \
+          $HOME/.config/herdr/plugins/github/herdr-automatic-rename-*/shell/hook.fish
     test -r "$_f"; and source "$_f"; and break
 end
 ```

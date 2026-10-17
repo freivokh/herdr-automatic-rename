@@ -6,6 +6,7 @@ All notable changes to herdr-automatic-rename are documented here. The format fo
 
 ### Fixed
 
+- The shell hook line now finds the plugin under herdr 0.9.5's `github-installations/` folder, and picks it over an old `github/` copy that `herdr plugin update` leaves behind. Before, a fresh install never loaded the hook, so tabs were not renamed when a command started. If you added the hook before this fix, re-run the installer to print the new line, then swap it in by hand ([#27](https://github.com/qu8n/herdr-automatic-rename/issues/27), thanks @paidem).
 - The bash hook no longer turns itself off when `cd` is an alias or function, or when `CDPATH` is set ([#28](https://github.com/qu8n/herdr-automatic-rename/issues/28), thanks @paidem). It used to lose track of its own folder and stop renaming tabs without any error.
 
 ## [0.13.0] - 2026-09-29
