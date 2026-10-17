@@ -4,6 +4,10 @@ All notable changes to herdr-automatic-rename are documented here. The format fo
 
 ## [Unreleased]
 
+### Fixed
+
+- The bash hook no longer turns itself off when `cd` is an alias or function, or when `CDPATH` is set ([#28](https://github.com/qu8n/herdr-automatic-rename/issues/28), thanks @paidem). It used to lose track of its own folder and stop renaming tabs without any error.
+
 ## [0.13.0] - 2026-09-29
 
 ### Changed
