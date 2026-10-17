@@ -6,6 +6,7 @@ All notable changes to herdr-automatic-rename are documented here. The format fo
 
 ### Fixed
 
+- Tabs mirrored by [herdr-mirror](https://github.com/nikok6/herdr-mirror) keep the label the remote machine gives them. The local plugin used to name, number and host-tag them, and herdr-mirror pushed that label to the remote, where it opted the tab out ([#26](https://github.com/qu8n/herdr-automatic-rename/issues/26), thanks @paidem).
 - The shell hook line now finds the plugin under herdr 0.9.5's `github-installations/` folder, and picks it over an old `github/` copy that `herdr plugin update` leaves behind. Before, a fresh install never loaded the hook, so tabs were not renamed when a command started. If you added the hook before this fix, re-run the installer to print the new line, then swap it in by hand ([#27](https://github.com/qu8n/herdr-automatic-rename/issues/27), thanks @paidem).
 - The bash hook no longer turns itself off when `cd` is an alias or function, or when `CDPATH` is set ([#28](https://github.com/qu8n/herdr-automatic-rename/issues/28), thanks @paidem). It used to lose track of its own folder and stop renaming tabs without any error.
 

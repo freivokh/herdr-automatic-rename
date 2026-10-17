@@ -1223,6 +1223,41 @@ ar_branch_of() {
   printf '%s' "$AR_BRANCH"
 }
 
+# ar_mirror_pane <directory> -> 0 when it is herdr-mirror's .mirror-pane marker.
+# A pane there streams a terminal from another machine, and its tab label is the
+# remote tab's. herdr-mirror reads a local label that differs as a user rename
+# and pushes it to the remote, where this plugin, if it runs there too, opts the
+# tab out for good (issue #26). So a mirror tab's label is never written here,
+# not its name, its number, or the host tag: the remote names it, and
+# herdr-mirror copies that name down.
+ar_mirror_pane() {
+  case $1 in */.mirror-pane) return 0 ;; esac
+  return 1
+}
+
+# ar_mirror_tabs <snapshot or pane list JSON> -> " <tab_id> <tab_id> ", every tab
+# holding a herdr-mirror pane, or " " when none does. One jq per pass, so the
+# tab loop tests a row with a case match. Every pane of the tab is asked, not
+# just the one naming would pick: a background split resolves no pane at all,
+# and its label is still the remote's. The marker test is herdr-mirror's own,
+# either cwd field, the same one ar_mirror_pane makes.
+#
+# Returns 1 when there is nothing to read, it does not parse, or it carries no
+# pane array (an error envelope parses fine), and the caller then writes no tab
+# at all. An empty set there would let the pass number every mirror tab on a
+# socket blip, and the opt-out that sends to the remote is for good.
+ar_mirror_tabs() {
+  local ids
+  [ -n "$1" ] || return 1
+  ids=$(printf '%s' "$1" | jq -r '
+    (.result.snapshot // .snapshot // .result // .).panes
+    | if type != "array" then error("no pane array") else . end
+    | [ .[]
+      | select(any(.foreground_cwd, .cwd; type == "string" and endswith("/.mirror-pane")))
+      | .tab_id ] | unique | join(" ")' 2>/dev/null) || return 1
+  printf ' %s ' "$ids"
+}
+
 # ar_tab_name <tab_id> <pane_count> <focused> <layout_pane> [workspace base]
 #   -> base name on stdout.
 # Returns 1 when the name can't be computed (no resolvable pane, process-info
@@ -1945,6 +1980,13 @@ ar_reconcile_tabs() {
       [ -n "$tid" ] || continue
       i=$(( i + 1 ))
       AR_SEEN_TABS="$AR_SEEN_TABS $tid"
+      # Ahead of everything that writes, --clear included: any label put on a
+      # mirror tab here is pushed to the remote tab (see ar_mirror_pane). Its
+      # position still counts, so the tabs after it keep their numbers.
+      case ${AR_MIRROR_TABS:-} in *" $tid "*)
+        ar_trace "$tid mirror tab: the label is the remote's, left alone"
+        continue ;;
+      esac
       base0=$(ar_tab_strip_prefix "$label" "$(ar_tag_strip_ok "$tid")")
       base=$base0
       named=0
@@ -2438,7 +2480,7 @@ label: $label"
 # whether to number or to strip; --clear ignores the toggles and strips
 # everything (the uninstall path).
 ar_reconcile() {
-  local wsjson snap
+  local wsjson snap lpanes="" mjson
   # A reset deletes the target tab's state once (under the lock) so it re-adopts.
   # Whether there was anything to re-adopt is read BEFORE the delete, because that
   # is what the action reports back and `del` on a key that was never there
@@ -2533,7 +2575,14 @@ ar_reconcile() {
     # merely late in reporting. Here that is a round-trip rather than a jq over
     # the snapshot, so it is still asked for only where a pass will read it.
     if ar_ws_derives && { [ "$NAME_TABS" = "1" ] || ar_ws_pass; }; then
-      AR_PANES_JSON=$("$HERDR" pane list 2>/dev/null) || AR_PANES_JSON='{"result":{"panes":[]}}'
+      # The empty stand-in is fine for naming, which then names nothing. The
+      # mirror check below must not mistake it for a list, so only a real one is
+      # kept for it.
+      if AR_PANES_JSON=$("$HERDR" pane list 2>/dev/null); then
+        lpanes=$AR_PANES_JSON
+      else
+        AR_PANES_JSON='{"result":{"panes":[]}}'
+      fi
     fi
   fi
   # ar_index_pass decides which of these have work to do (numbering, or the
@@ -2545,7 +2594,18 @@ ar_reconcile() {
   if ar_index_pass tabs || [ "$NAME_TABS" = "1" ]; then
     AR_SEEN_TABS=""
     AR_TABS_PARTIAL=""
-    ar_reconcile_tabs "$wsjson"
+    # The pane list fetched above when there was one, and a fetch of its own
+    # when not: numbering alone still has to know which tabs it must not touch.
+    if [ "$AR_HAVE_SNAPSHOT" = "1" ]; then
+      mjson=$snap
+    else
+      mjson=${lpanes:-$("$HERDR" pane list 2>/dev/null)}
+    fi
+    if AR_MIRROR_TABS=$(ar_mirror_tabs "$mjson"); then
+      ar_reconcile_tabs "$wsjson"
+    else
+      ar_trace "tabs left alone: no pane list to tell herdr-mirror's tabs by"
+    fi
     # AR_SEEN_TABS is a space-joined list and ar_state_prune takes one tab id per
     # argument, so the split is the call. herdr tab ids carry no whitespace.
     # A pass that could not read every workspace's tabs prunes nothing: the tabs
@@ -2598,6 +2658,7 @@ ar_fast_tab() {
   local tab="${HERDR_TAB_ID:-}"
   ar_trace "fast tab entered: $MODE, tab [${tab}]"
   [ -n "$tab" ] || { ar_trace "fast tab: no HERDR_TAB_ID"; return 0; }
+  ar_mirror_pane "$PWD" && { ar_trace "$tab mirror pane: named by the remote"; return 0; }
   local prog="" cmd="" info name label raw prefix slabel enabled auto want ws
   local tag hosttag core
   if [ "$MODE" = "preexec" ]; then

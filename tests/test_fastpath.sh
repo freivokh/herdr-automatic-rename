@@ -214,4 +214,21 @@ check_contains "reconcile: the same tab is named after the title" "$(log)" \
   "tab rename t1 [1] Fix the revenue query"
 teardown
 
+# ======================================================================
+# A herdr-mirror pane (issue #26). herdr-mirror types `exec <streamer>` into a
+# local shell sitting in its .mirror-pane marker directory, so the hooks fire
+# there once. The tab belongs to the remote: herdr-mirror pushes any local
+# label to the remote tab as a user rename, which opts that tab out on the
+# remote. Neither hook may rename it.
+# ======================================================================
+setup
+mkdir -p "$SB/herdr-mirror/.mirror-pane"
+(cd "$SB/herdr-mirror/.mirror-pane" &&
+  /usr/bin/env bash "$ENGINE" preexec "exec '/Users/me/.local/bin/herdr-mirror' pane w1:p1")
+check "mirror pane: preexec renames nothing" "" "$(log)"
+: >"$HERDR_MOCK_LOG"
+(cd "$SB/herdr-mirror/.mirror-pane" && /usr/bin/env bash "$ENGINE" precmd)
+check "mirror pane: precmd renames nothing" "" "$(log)"
+teardown
+
 t_summary
